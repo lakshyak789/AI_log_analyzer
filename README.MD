@@ -81,13 +81,6 @@ The tool will now "tail" the configured log file. When it detects a new line con
 3. Send the data to the AI model.
 4. Dispatch an alert with the AI's explanation and suggested fix.
 
-## 🧪 Running Tests
-
-To run the internal checks (currently embedded in modules):
-
-```bash
-python core/parser.py
-python core/analyzer.py
 ```
 
 ## 🤝 Contributing
