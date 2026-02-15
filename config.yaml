@@ -14,7 +14,7 @@ notifications:
   email:
     notify_on: ["ERROR", "CRITICAL", "WARNING"]
     recipients:
-      - 
+      - ""
     enabled: true
     smtp_server: smtp.gmail.com
     smtp_port: 587
@@ -31,4 +31,5 @@ ai_analysis:
   enable_code_context: true
   project_root: .
   model: "ollama/deepseek-r1:1.5b"
-  api_base: "http://localhost:11434"
+  api_base: "http://localhost:11434" # Leave empty if using an AI provider with a default API base (e.g., OpenAI)
+  model_api_key: "${MODEL_API_KEY}"  # Leave empty in the .env file if using Ollama
