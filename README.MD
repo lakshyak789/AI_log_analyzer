@@ -38,7 +38,7 @@ Define where your log file is and what keywords trigger an alert.
 ```yaml
 monitoring:
   log_file: "./app.log"       # Path to the log file you want to watch
-  poll_interval: 0.1          # Check frequency
+  poll_interval: 0.5          # Aggregation delay (seconds) for multi-line logs
   trigger_levels:             # Keywords that trigger analysis
     - "ERROR"
     - "CRITICAL"
@@ -75,8 +75,8 @@ Start the analyzer by running:
 python main.py
 ```
 
-The tool will now "tail" the configured log file. When it detects a new line containing an error keyword (e.g., `ERROR`), it will:
-1. Parse the line to find the source file.
+The tool will now "tail" the configured log file. It uses a short buffering window (default 0.5s) to aggregate related log lines—such as multi-line stack traces—into a single entry. When it detects an entry containing an error keyword (e.g., `ERROR`), it will:
+1. Parse the entry to find the most relevant source file.
 2. Read the surrounding code context.
 3. Send the data to the AI model.
 4. Dispatch an alert with the AI's explanation and suggested fix.

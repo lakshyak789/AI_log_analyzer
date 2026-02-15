@@ -77,13 +77,16 @@ class LogMonitor(FileSystemEventHandler):
 
 def start_monitoring(config, new_line_callback):
     """Starts the watchdog observer to monitor the log file."""
-    log_file = config["monitoring"]["log_file"]
+    monitoring_config = config.get("monitoring", {})
+    log_file = monitoring_config.get("log_file", "app.log")
+    buffer_delay = monitoring_config.get("poll_interval", 0.5)
+    
     log_dir = os.path.dirname(os.path.abspath(log_file))
     if not os.path.exists(log_dir): 
         logger.error(f"Error log directory does not exist: {log_dir}")
         return None
     
-    event_handler = LogMonitor(log_file, new_line_callback)
+    event_handler = LogMonitor(log_file, new_line_callback, buffer_delay=buffer_delay)
     observer = Observer()
     observer.schedule(event_handler, log_dir, recursive=False)
     observer.start()
