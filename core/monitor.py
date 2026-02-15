@@ -1,8 +1,11 @@
 import os
 import time
 import threading
+import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+logger = logging.getLogger(__name__)
 
 class LogMonitor(FileSystemEventHandler):
     def __init__(self, log_path, callback_func, buffer_delay=0.5):
@@ -18,7 +21,7 @@ class LogMonitor(FileSystemEventHandler):
             self.file_handle = open(self.log_path, 'r')
             self.file_handle.seek(0, 2)  # Move to the end of the file
         except Exception as e:
-            print(f"Error opening log file: {e}")
+            logger.error(f"Error opening log file: {e}")
             self.file_handle = None
 
     def on_modified(self, event):
@@ -35,7 +38,7 @@ class LogMonitor(FileSystemEventHandler):
                 self.file_handle = open(self.log_path, 'r')
                 self.process_new_lines()
             except Exception as e:
-                print(f"Error reopening log file: {e}")
+                logger.error(f"Error reopening log file: {e}")
                 self.file_handle = None
 
     def process_new_lines(self):
@@ -77,21 +80,21 @@ def start_monitoring(config, new_line_callback):
     log_file = config["monitoring"]["log_file"]
     log_dir = os.path.dirname(os.path.abspath(log_file))
     if not os.path.exists(log_dir): 
-        print(f"Error log directory does not exist: {log_dir}")
+        logger.error(f"Error log directory does not exist: {log_dir}")
         return None
     
     event_handler = LogMonitor(log_file, new_line_callback)
     observer = Observer()
     observer.schedule(event_handler, log_dir, recursive=False)
     observer.start()
-    print(f"Started monitoring log file: {log_file}")
+    logger.info(f"Started monitoring log file: {log_file}")
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
-        print("Stopping log monitor...")
+        logger.info("Stopping log monitor...")
     observer.join()
 
 

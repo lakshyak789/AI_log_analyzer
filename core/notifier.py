@@ -2,8 +2,11 @@ import os
 import smtplib
 import requests
 import json
+import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+logger = logging.getLogger(__name__)
 
 def send_slack_alert(log_entry, ai_analysis, config):
     """
@@ -17,7 +20,7 @@ def send_slack_alert(log_entry, ai_analysis, config):
     # 2. Get Webhook URL (Securely from Env Var)
     webhook_url = slack_config.get('webhook_url')
     if not webhook_url:
-        print("  Slack enabled but Webhook URL not found in environment.")
+        logger.warning("Slack enabled but Webhook URL not found in environment.")
         return
 
     # 3. Format the Message (using Slack Block Kit for nice formatting)
@@ -57,21 +60,21 @@ def send_slack_alert(log_entry, ai_analysis, config):
             headers={'Content-Type': 'application/json'}
         )
         if response.status_code == 200:
-            print("Slack alert sent successfully.")
+            logger.info("Slack alert sent successfully.")
         else:
-            print(f"Failed to send Slack alert: {response.text}")
+            logger.error(f"Failed to send Slack alert: {response.text}")
     except Exception as e:
-        print(f"Error sending Slack request: {e}")
+        logger.error(f"Error sending Slack request: {e}")
 
 def send_email_alert(log_entry, ai_analysis, config):
     """
     Sends an email using standard SMTP.
     """
     # 1. Check if Email is enabled
-    print("Checking email notification settings...")
+    logger.debug("Checking email notification settings...")
     email_config = config.get('notifications', {}).get('email', {})
     if not email_config.get('enabled'):
-        print("ℹ️  Email notifications are disabled in config.")
+        logger.debug("Email notifications are disabled in config.")
         return
 
     # 2. Get Credentials
@@ -84,7 +87,7 @@ def send_email_alert(log_entry, ai_analysis, config):
     password = email_config.get('password') 
 
     if not (smtp_server and password):
-        print(" Email enabled but missing configuration or password.")
+        logger.warning("Email enabled but missing configuration or password.")
         return
 
     # 3. Construct Email
@@ -104,7 +107,7 @@ def send_email_alert(log_entry, ai_analysis, config):
 
     # 4. Send
     try:
-        print(f"Connecting to {smtp_server}:{smtp_port}...")
+        logger.info(f"Connecting to {smtp_server}:{smtp_port}...")
         
         # IF PORT IS 465 -> Use SMTP_SSL (Implicit SSL)
         if smtp_port == 465:
@@ -118,6 +121,6 @@ def send_email_alert(log_entry, ai_analysis, config):
         server.login(sender_email, password)
         server.sendmail(sender_email, recipients, msg.as_string())
         server.quit()
-        print(f"Email sent to {len(recipients)} recipients.")
+        logger.info(f"Email sent to {len(recipients)} recipients.")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email: {e}")

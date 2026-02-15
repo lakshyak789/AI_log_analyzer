@@ -1,6 +1,6 @@
 monitoring:
 
-  log_file: "./test.log"
+  log_file: "./sample_error/test.log"
 
   poll_interval: 0.1
 

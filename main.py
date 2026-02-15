@@ -1,10 +1,21 @@
 import os
 import sys
 import yaml
+import logging
 from dotenv import load_dotenv
 
 # Import our custom modules
 from core import monitor, parser, analyzer, notifier
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # 1. Load Environment Variables (Security First)
 load_dotenv()
@@ -19,7 +30,7 @@ def load_config(path="config.yaml"):
     Syntax: ${VAR_NAME} will be replaced by the value of os.getenv('VAR_NAME')
     """
     if not os.path.exists(path):
-        print(f"Config file not found at {path}")
+        logger.error(f"Config file not found at {path}")
         sys.exit(1)
     
     with open(path, "r") as f:
@@ -33,7 +44,7 @@ def load_config(path="config.yaml"):
         # Get the value from .env or system, return empty string if missing
         value = os.getenv(env_var)
         if value is None:
-            print(f"Warning: Config variable ${{{env_var}}} not set in environment.")
+            logger.warning(f"Config variable ${{{env_var}}} not set in environment.")
             return "" 
         return value
 
@@ -43,7 +54,7 @@ def load_config(path="config.yaml"):
     try:
         return yaml.safe_load(updated_content)
     except yaml.YAMLError as e:
-        print(f"❌ Error parsing config file: {e}")
+        logger.error(f"Error parsing config file: {e}")
         sys.exit(1)
 
 def handle_new_log(entry, config):
@@ -51,7 +62,7 @@ def handle_new_log(entry, config):
     Handles potentially multi-line log entries.
     Scans for the best file/line match to provide context to the AI.
     """
-    print(f"DEBUG: Received log entry: {entry[:50]}...")
+    logger.debug(f"Received log entry: {entry[:50]}...")
     trigger_levels = config['monitoring'].get('trigger_levels', [])
     lines = entry.strip().split('\n')
     
@@ -78,9 +89,9 @@ def handle_new_log(entry, config):
         return
 
     if best_match:
-        print(f"\nTrace detected: {best_match['filepath']} (Line {best_match['lineno']})")
+        logger.info(f"Trace detected: {best_match['filepath']} (Line {best_match['lineno']})")
     elif is_error_level:
-        print(f"\nTrigger Detected: {lines[0][:100]}...")
+        logger.info(f"Trigger Detected: {lines[0][:100]}...")
 
     # 3. Analyze & Notify
     ai_suggestion = analyzer.analyze_error(entry, best_match, config)
@@ -90,15 +101,15 @@ def handle_new_log(entry, config):
         notifier.send_email_alert(entry, ai_suggestion, config)
 
 def main():
-    print(" STARTING LOG ANALYZER ")
+    logger.info("STARTING LOG ANALYZER")
 
     # 1. Load Config
     config = load_config()
     
     # 2. Validation
     log_path = config['monitoring']['log_file']
-    print(f" Target Log: {log_path}")
-    print(f"⚡ Triggers: {config['monitoring']['trigger_levels']}")
+    logger.info(f"Target Log: {log_path}")
+    logger.info(f"Triggers: {config['monitoring']['trigger_levels']}")
     
     # 3. Define the Callback
     # We create a wrapper function that passes 'config' to our handler

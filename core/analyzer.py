@@ -1,5 +1,8 @@
 import os
+import logging
 from litellm import completion
+
+logger = logging.getLogger(__name__)
 
 def get_safe_code_snippet(full_path, line_number, context_window=10):
     """
@@ -70,8 +73,8 @@ def analyze_error(log_entry, parsed_data, config):
         {"role": "user", "content": prompt}
     ]
 
-    print(f" Sending request to AI ({ai_config['model']})...")
-    print(f" Prompt:\n{prompt}...")  # Print the first 500 chars of the prompt for debugging
+    logger.info(f"Sending request to AI ({ai_config['model']})...")
+    logger.debug(f"Prompt:\n{prompt}...")  # Log the first 500 chars of the prompt for debugging
     
 
     try:
@@ -82,7 +85,7 @@ def analyze_error(log_entry, parsed_data, config):
             api_base=ai_config.get('api_base'),
             api_key=api_key
         )
-        print(f" AI response received.  { response.choices[0].message.content} ")
+        logger.info(f"AI response received. {response.choices[0].message.content}")
         return response.choices[0].message.content
     except Exception as e:
         return f"AI Analysis Failed: {str(e)}"
