@@ -1,0 +1,34 @@
+monitoring:
+
+  log_file: "./test.log"
+
+  poll_interval: 0.1
+
+  trigger_levels:
+    - "ERROR"
+    - "CRITICAL"
+    - "WARNING"
+
+
+notifications:
+  email:
+    notify_on: ["ERROR", "CRITICAL", "WARNING"]
+    recipients:
+      - 
+    enabled: true
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    sender_email: ""
+    password: "${SMTP_PASSWORD}" 
+
+  slack:
+    notify_on: ["ERROR", "CRITICAL"]
+    enabled: false
+    webhook_url: "${SLACK_WEBHOOK_URL}" 
+
+ai_analysis:
+  enabled: true
+  enable_code_context: true
+  project_root: .
+  model: "ollama/deepseek-r1:1.5b"
+  api_base: "http://localhost:11434"
