@@ -1,6 +1,11 @@
 monitoring:
 
-  log_file: "./sample_error/test.log"
+  services:
+    - name: "web_server"
+      log_file: "./sample_error/web_server.log"
+    - name: "database"
+      log_file: "./sample_error/database.log"
+  
 
   poll_interval: 0.5
 
