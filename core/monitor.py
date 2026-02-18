@@ -78,17 +78,38 @@ class LogMonitor(FileSystemEventHandler):
 def start_monitoring(config, new_line_callback):
     """Starts the watchdog observer to monitor the log file."""
     monitoring_config = config.get("monitoring", {})
+    services = monitoring_config.get("services", [])
     log_file = monitoring_config.get("log_file", "app.log")
     buffer_delay = monitoring_config.get("poll_interval", 0.5)
-    
-    log_dir = os.path.dirname(os.path.abspath(log_file))
-    if not os.path.exists(log_dir): 
-        logger.error(f"Error log directory does not exist: {log_dir}")
+
+    if not services:
+        logger.error("No services defined in the configuration.")
         return None
     
-    event_handler = LogMonitor(log_file, new_line_callback, buffer_delay=buffer_delay)
     observer = Observer()
-    observer.schedule(event_handler, log_dir, recursive=False)
+    active_monitors = 0
+
+    for service in services:
+        service_name = service.get("name", "unknown_service")
+        log_file = os.path.abspath(service.get("log_file"))
+        log_dir = os.path.dirname(log_file)
+        project_path = os.path.abspath(service.get("project_path", "."))
+        if not os.path.exists(log_dir):
+            logger.error(f"Error log directory does not exist for service '{service_name}': {log_dir}")
+            continue
+
+        def create_callback(svc_name, proj_path):
+            return lambda full_entry: new_line_callback(full_entry, svc_name, proj_path)
+    
+        event_handler = LogMonitor(log_file, create_callback(service_name, project_path), buffer_delay=buffer_delay)
+    
+        observer.schedule(event_handler, log_dir, recursive=False)
+        active_monitors += 1
+
+    if active_monitors == 0:
+        logger.error("No valid log files to monitor. Exiting.")
+        return None
+    
     observer.start()
     logger.info(f"Started monitoring log file: {log_file}")
 

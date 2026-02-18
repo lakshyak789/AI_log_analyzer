@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
 
-def send_slack_alert(log_entry, ai_analysis, config):
+def send_slack_alert(log_entry, ai_analysis, service_name, config):
     """
     Sends a formatted message to a Slack channel using a Webhook URL.
     """
@@ -25,12 +25,13 @@ def send_slack_alert(log_entry, ai_analysis, config):
 
     # 3. Format the Message (using Slack Block Kit for nice formatting)
     payload = {
+        "text": f"🚨 *Crash Detected in {service_name}* 🚨",
         "blocks": [
             {
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": "🚨 Log Monitor Alert"
+                    "text": f"Error in {service_name}",
                 }
             },
             {
@@ -66,7 +67,7 @@ def send_slack_alert(log_entry, ai_analysis, config):
     except Exception as e:
         logger.error(f"Error sending Slack request: {e}")
 
-def send_email_alert(log_entry, ai_analysis, config):
+def send_email_alert(log_entry, ai_analysis, service_name, config):
     """
     Sends an email using standard SMTP.
     """
@@ -97,7 +98,7 @@ def send_email_alert(log_entry, ai_analysis, config):
     msg['Subject'] = f"🚨 Log Error Detected: {log_entry[:50]}..."
 
     body = f"""
-    <h2>Error Detected</h2>
+    <h2>Error Detected in Service: {service_name}</h2>
     <pre style="background-color: #f4f4f4; padding: 10px;">{log_entry}</pre>
     
     <h3>🤖 AI Analysis & Fix</h3>

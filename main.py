@@ -57,7 +57,7 @@ def load_config(path="config.yaml"):
         logger.error(f"Error parsing config file: {e}")
         sys.exit(1)
 
-def handle_new_log(entry, config):
+def handle_new_log(entry, service_name,project_path, config):
     """
     Handles potentially multi-line log entries.
     Scans for the best file/line match to provide context to the AI.
@@ -94,11 +94,12 @@ def handle_new_log(entry, config):
         logger.info(f"Trigger Detected: {lines[0][:100]}...")
 
     # 3. Analyze & Notify
-    ai_suggestion = analyzer.analyze_error(entry, best_match, config)
+    # Pass best_match (parsed_data) to analyzer
+    ai_suggestion = analyzer.analyze_error(entry, best_match, project_path, config)
     
     if ai_suggestion:
-        notifier.send_slack_alert(entry, ai_suggestion, config)
-        notifier.send_email_alert(entry, ai_suggestion, config)
+        notifier.send_slack_alert(entry, ai_suggestion, service_name,  config)
+        notifier.send_email_alert(entry, ai_suggestion, service_name, config)
 
 def main():
     logger.info("STARTING LOG ANALYZER")
@@ -107,17 +108,23 @@ def main():
     config = load_config()
     
     # 2. Validation
-    log_path = config['monitoring']['log_file']
-    logger.info(f"Target Log: {log_path}")
-    logger.info(f"Triggers: {config['monitoring']['trigger_levels']}")
+    services = config.get('monitoring', {}).get('services', [])
+    if not services:
+        logger.error("No services defined in the configuration. Exiting.")
+        sys.exit(1) 
+    for service in services:
+        log_path = service.get('log_file')
+        if not log_path:
+            logger.error(f"Service '{service.get('name', 'unknown')}' is missing 'log_file' in config.")
+            sys.exit(1)
+        logger.info(f"Configured to monitor: {log_path} for service '{service.get('name', 'unknown')}'")
+        logger.info(f"Trigger Levels: {config['monitoring'].get('trigger_levels', [])}")
     
-    # 3. Define the Callback
-    # We create a wrapper function that passes 'config' to our handler
-    def on_new_line(line):
-        handle_new_log(line, config)
+    
+  
+    def on_new_line(line, service_name, project_path):
+        handle_new_log(line, service_name, project_path, config)
 
-    # 4. Start Monitoring
-    # This blocks the script and keeps it running forever
     monitor.start_monitoring(config, on_new_line)
 
 if __name__ == "__main__":

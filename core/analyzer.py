@@ -35,7 +35,7 @@ def get_safe_code_snippet(full_path, line_number, context_window=10):
     except Exception as e:
         return f"Error reading local file: {str(e)}"
 
-def analyze_error(log_entry, parsed_data, config):
+def analyze_error(log_entry, parsed_data, project_path, config):
     """
     Constructs the prompt and sends it to the configured AI provider.
     """
@@ -53,7 +53,7 @@ def analyze_error(log_entry, parsed_data, config):
         lang_type = parsed_data.get('type', 'text')
         
         # Resolve the full path based on the project_root in config
-        project_root = ai_config.get('project_root', '.')
+        project_root = project_path 
         full_path = os.path.join(project_root, file_path)
         
         snippet = get_safe_code_snippet(full_path, line_num)

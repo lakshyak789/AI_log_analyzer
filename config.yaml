@@ -3,27 +3,27 @@ monitoring:
   services:
     - name: "web_server"
       log_file: "./sample_error/web_server.log"
+      project_path: "./sample_error"
     - name: "database"
       log_file: "./sample_error/database.log"
+      project_path: "./sample_error"
   
 
   poll_interval: 0.5
 
   trigger_levels:
     - "ERROR"
-    - "CRITICAL"
-    - "WARNING"
 
 
 notifications:
   email:
-    notify_on: ["ERROR", "CRITICAL", "WARNING"]
+    notify_on: ["ERROR"]
     recipients:
-      - ""
+      - "example@gmail.com"
     enabled: true
     smtp_server: smtp.gmail.com
     smtp_port: 587
-    sender_email: ""
+    sender_email: "example@yahoo.com"
     password: "${SMTP_PASSWORD}" 
 
   slack:
@@ -34,7 +34,6 @@ notifications:
 ai_analysis:
   enabled: true
   enable_code_context: true
-  project_root: .
   model: "ollama/deepseek-r1:1.5b"
   api_base: "http://localhost:11434" # Leave empty if using an AI provider with a default API base (e.g., OpenAI)
   model_api_key: "${MODEL_API_KEY}"  # Leave empty in the .env file if using Ollama
