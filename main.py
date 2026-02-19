@@ -100,6 +100,7 @@ def handle_new_log(entry, service_name,project_path, config):
     if ai_suggestion:
         notifier.send_slack_alert(entry, ai_suggestion, service_name,  config)
         notifier.send_email_alert(entry, ai_suggestion, service_name, config)
+        notifier.send_discord_alert(entry, ai_suggestion, service_name, config)
 
 def main():
     logger.info("STARTING LOG ANALYZER")

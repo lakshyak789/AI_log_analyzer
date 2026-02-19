@@ -84,7 +84,7 @@ def send_email_alert(log_entry, ai_analysis, service_name, config):
     sender_email = email_config.get('sender_email')
     recipients = email_config.get('recipients', [])
     
-    # Password should be an env var name like "SMTP_PASSWORD"
+    
     password = email_config.get('password') 
 
     if not (smtp_server and password):
@@ -125,3 +125,46 @@ def send_email_alert(log_entry, ai_analysis, service_name, config):
         logger.info(f"Email sent to {len(recipients)} recipients.")
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
+
+
+
+def send_discord_alert(log_entry, ai_analysis, service_name, config):
+    """Sends a formatted alert to a Discord channel."""
+    
+    discord_config = config.get('notifications', {}).get('discord', {})
+    if not discord_config.get('enabled'):
+        return
+
+    
+    webhook_url = discord_config.get('webhook_url')
+
+    # Truncated strings as  discord limits embed descriptions to 4096 characters and field values to 1024
+    safe_error = log_entry[:1000]
+    safe_fix = ai_analysis[:1000]
+
+    payload = {
+        "username": "AI Log Analyzer",
+        "embeds": [
+            {
+                "title": f"🚨 Crash Detected in {service_name}",
+                "description": f"**Raw Error Trace:**\n```python\n{safe_error}\n```",
+                "color": 15158332, 
+                "fields": [
+                    {
+                        "name": "🧠 AI Suggested Fix",
+                        "value": f"{safe_fix}"
+                    }
+                ],
+                "footer": {
+                    "text": "Powered by RAG Middleware"
+                }
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(webhook_url, json=payload)
+        response.raise_for_status()
+        print(f"✅ Discord alert sent for {service_name}")
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Failed to send Discord alert: {e}")
